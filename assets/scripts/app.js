@@ -12,29 +12,36 @@ class DOMHelper {
   }
 }
 
-class ToolTip {}
+class Tooltip {}
 
 class ProjectItem {
-  constructor(id, updateProjectListsFunction) {
+  constructor(id, updateProjectListsFunction, type) {
     this.id = id;
     this.updateProjectListsHandler = updateProjectListsFunction;
     this.connectMoreInfoButton();
-    this.connectSwitchButton();
+    this.connectSwitchButton(type);
   }
 
   connectMoreInfoButton() {}
-  connectSwitchButton() {
+
+  connectSwitchButton(type) {
     const projectItemElement = document.getElementById(this.id);
-    const switchBtn = projectItemElement.querySelector("button:last-of-type");
-    DOMHelper.clearEventListeners(switchBtn);
+    let switchBtn = projectItemElement.querySelector("button:last-of-type");
+    switchBtn = DOMHelper.clearEventListeners(switchBtn);
+    switchBtn.textContent = type === "active" ? "Finish" : "Activate";
     switchBtn.addEventListener(
       "click",
       this.updateProjectListsHandler.bind(null, this.id)
     );
   }
+
+  update(updateProjectListsFn, type) {
+    this.updateProjectListsHandler = updateProjectListsFn;
+    this.connectSwitchButton(type);
+  }
 }
 
-class ProjectsList {
+class ProjectList {
   projects = [];
 
   constructor(type) {
@@ -42,7 +49,7 @@ class ProjectsList {
     const prjItems = document.querySelectorAll(`#${type}-projects li`);
     for (const prjItem of prjItems) {
       this.projects.push(
-        new ProjectItem(prjItem.id, this.switchProject.bind(this))
+        new ProjectItem(prjItem.id, this.switchProject.bind(this), this.type)
       );
     }
     console.log(this.projects);
@@ -59,24 +66,17 @@ class ProjectsList {
   }
 
   switchProject(projectId) {
-    this.switchHandler(
-      this.projects.find((project) => (project.id = projectId))
-    );
-    this.projects = this.projects.filter(
-      (project) => project.id !== project.id
-    );
-  }
-
-  update(updateProjectListsFn, type) {
-    this.updateProjectListHandler = updateProjectListFn;
-    this.connectSwitchButton();
+    // const projectIndex = this.projects.findIndex(p => p.id === projectId);
+    // this.projects.splice(projectIndex, 1);
+    this.switchHandler(this.projects.find((p) => p.id === projectId));
+    this.projects = this.projects.filter((p) => p.id !== projectId);
   }
 }
 
 class App {
   static init() {
-    const activeProjectsList = new ProjectsList("active");
-    const finishedProjectsList = new ProjectsList("finished");
+    const activeProjectsList = new ProjectList("active");
+    const finishedProjectsList = new ProjectList("finished");
     activeProjectsList.setSwitchHandlerFunction(
       finishedProjectsList.addProject.bind(finishedProjectsList)
     );
